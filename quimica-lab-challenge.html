@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Química Lab Challenge</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --bg-deep: #050a1a;
+    --bg-mid: #0a1530;
+    --bg-panel: #0d1f40;
+    --blue-neon: #00d4ff;
+    --violet-neon: #b44dff;
+    --green-neon: #00ff88;
+    --pink-neon: #ff2d78;
+    --yellow-sci: #ffd60a;
+    --text-main: #e8f4ff;
+    --text-muted: #7fa3c8;
+    --panel-border: rgba(0,212,255,0.25);
+    --glow-blue: 0 0 20px rgba(0,212,255,0.5), 0 0 40px rgba(0,212,255,0.2);
+    --glow-violet: 0 0 20px rgba(180,77,255,0.5), 0 0 40px rgba(180,77,255,0.2);
+    --glow-green: 0 0 20px rgba(0,255,136,0.5);
+    --glow-pink: 0 0 20px rgba(255,45,120,0.5);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 430px;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #050a1a 0%, #080f25 50%, #050a1a 100%);
+  }
+
+  /* ─── SCREENS ─── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+  .screen.active { display: flex; }
+
+  /* ─── PARTICLES ─── */
+  #particles-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    max-width: 430px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* ─── SPLASH ─── */
+  #screen-splash {
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(ellipse at 50% 40%, #0d1f4a 0%, #050a1a 70%);
+  }
+
+  .splash-content {
+    text-align: center;
+    z-index: 1;
+    padding: 20px;
+  }
+
+  .flask-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+    animation: flask-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes flask-pulse {
+    0%, 100% { filter: drop-shadow(0 0 15px var(--blue-neon)) drop-shadow(0 0 30px var(--violet-neon)); transform: scale(1); }
+    50% { filter: drop-shadow(0 0 25px var(--blue-neon)) drop-shadow(0 0 50px var(--violet-neon)); transform: scale(1.05); }
+  }
+
+  .splash-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--blue-neon);
+    text-shadow: var(--glow-blue);
+    letter-spacing: 2px;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .splash-subtitle {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    color: var(--violet-neon);
+    letter-spacing: 4px;
+    text-shadow: var(--glow-violet);
+    margin-bottom: 40px;
+  }
+
+  .splash-loading {
+    width: 200px;
+    height: 4px;
+    background: rgba(0,212,255,0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 0 auto 16px;
+  }
+
+  .splash-loading-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-neon), var(--violet-neon));
+    border-radius: 2px;
+    animation: loading 2.5s ease-in-out forwards;
+    box-shadow: 0 0 10px var(--blue-neon);
+  }
+
+  @keyframes loading { from { width: 0; } to { width: 100%; } }
+
+  .splash-text {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* ─── HUD / TOP BAR ─── */
+  .hud {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(5,10,26,0.9);
+    border-bottom: 1px solid var(--panel-border);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .hud-coins {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--yellow-sci);
+    text-shadow: 0 0 10px var(--yellow-sci);
+  }
+
+  .hud-level {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--violet-neon);
+    text-shadow: var(--glow-violet);
+    text-align: center;
+  }
+
+  .hud-xp {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ─── MAIN MENU ─── */
+  #screen-menu {
+    background: var(--bg-deep);
+  }
+
+  .menu-hero {
+    width: 100%;
+    padding: 30px 20px 20px;
+    text-align: center;
+    flex-shrink: 0;
+    position: relative;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.08) 0%, transparent 70%);
+  }
+
+  .menu-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--blue-neon);
+    text-shadow: var(--glow-blue);
+    margin-bottom: 4px;
+  }
+
+  .menu-rank {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--violet-neon);
+    letter-spacing: 3px;
+  }
+
+  .xp-bar-wrap {
+    margin: 12px 20px;
+    background: rgba(0,212,255,0.1);
+    border-radius: 4px;
+    height: 8px;
+    border: 1px solid var(--panel-border);
+    overflow: hidden;
+  }
+
+  .xp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-neon), var(--violet-neon));
+    border-radius: 4px;
+    box-shadow: 0 0 8px var(--blue-neon);
+    transition: width 0.5s ease;
+  }
+
+  .menu-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 20px;
+    width: 100%;
+  }
+
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    margin: 20px 0 12px;
+    text-transform: uppercase;
+  }
+
+  .mode-cards {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .mode-card {
+    flex: 1;
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mode-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .mode-card.story::before { background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.15) 0%, transparent 70%); }
+  .mode-card.challenge::before { background: radial-gradient(ellipse at 50% 0%, rgba(180,77,255,0.15) 0%, transparent 70%); }
+
+  .mode-card:active::before { opacity: 1; }
+  .mode-card:active { transform: scale(0.97); }
+
+  .mode-card-icon { font-size: 32px; margin-bottom: 8px; }
+  .mode-card-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 4px;
+  }
+  .mode-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  .exp-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .exp-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .exp-card::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .exp-card.lv1::after { background: var(--blue-neon); box-shadow: 0 0 8px var(--blue-neon); }
+  .exp-card.lv2::after { background: var(--pink-neon); box-shadow: 0 0 8px var(--pink-neon); }
+  .exp-card.lv3::after { background: var(--violet-neon); box-shadow: 0 0 8px var(--violet-neon); }
+  .exp-card.lv4::after { background: var(--green-neon); box-shadow: 0 0 8px var(--green-neon); }
+
+  .exp-card:active { transform: scale(0.98); background: rgba(13,31,64,0.8); }
+
+  .exp-icon { font-size: 36px; flex-shrink: 0; }
+
+  .exp-info { flex: 1; }
+  .exp-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 3px;
+  }
+  .exp-desc { font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 6px; }
+
+  .stars { display: flex; gap: 3px; }
+  .star { font-size: 14px; }
+  .star.empty { opacity: 0.25; }
+
+  .exp-badge {
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .badge-available { background: rgba(0,212,255,0.15); color: var(--blue-neon); border: 1px solid var(--blue-neon); }
+  .badge-locked { background: rgba(255,255,255,0.05); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
+
+  /* ─── EXPERIMENTS ─── */
+  #screen-experiment {
+    background: var(--bg-deep);
+  }
+
+  .exp-hud {
+    width: 100%;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(5,10,26,0.95);
+    border-bottom: 1px solid var(--panel-border);
+    flex-shrink: 0;
+  }
+
+  .btn-back {
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--panel-border);
+    color: var(--blue-neon);
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+
+  .btn-back:active { background: rgba(0,212,255,0.2); transform: scale(0.95); }
+
+  .exp-progress-wrap {
+    flex: 1;
+  }
+
+  .exp-progress-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .exp-progress-bar {
+    height: 6px;
+    background: rgba(0,212,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .exp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue-neon), var(--violet-neon));
+    border-radius: 3px;
+    box-shadow: 0 0 6px var(--blue-neon);
+    transition: width 0.4s ease;
+  }
+
+  .exp-score-hud {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--yellow-sci);
+    text-shadow: 0 0 10px var(--yellow-sci);
+    flex-shrink: 0;
+  }
+
+  .exp-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    width: 100%;
+  }
+
+  .exp-intro {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .exp-intro::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .exp-intro-emoji { font-size: 56px; margin-bottom: 12px; display: block; }
+
+  .exp-intro-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--blue-neon);
+    text-shadow: var(--glow-blue);
+    margin-bottom: 8px;
+  }
+
+  .exp-intro-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .phase-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--violet-neon);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  /* ─── TYNDALL GAME ─── */
+  .tyndall-scene {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .tyndall-canvas-wrap {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(180deg, #02060f 0%, #040c1e 100%);
+  }
+
+  #tyndall-canvas { width: 100%; height: 100%; }
+
+  .tyndall-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .mix-option {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mix-option:active { transform: scale(0.96); }
+
+  .mix-option.selected {
+    border-color: var(--blue-neon);
+    background: rgba(0,212,255,0.12);
+    box-shadow: 0 0 12px rgba(0,212,255,0.2);
+  }
+
+  .mix-option.correct {
+    border-color: var(--green-neon);
+    background: rgba(0,255,136,0.12);
+    box-shadow: 0 0 12px rgba(0,255,136,0.3);
+  }
+
+  .mix-option.wrong {
+    border-color: var(--pink-neon);
+    background: rgba(255,45,120,0.12);
+    box-shadow: 0 0 12px rgba(255,45,120,0.2);
+  }
+
+  .mix-icon { font-size: 28px; margin-bottom: 6px; }
+  .mix-name { font-family: 'Orbitron', monospace; font-size: 10px; color: var(--text-main); }
+  .mix-type { font-size: 10px; color: var(--text-muted); margin-top: 3px; }
+
+  /* ─── ELEPHANT TOOTHPASTE ─── */
+  .lab-bench {
+    width: 100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .reagent-shelf {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .reagent {
+    width: 68px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .reagent:active { transform: scale(0.93) translateY(-4px); }
+
+  .reagent.used { opacity: 0.35; pointer-events: none; }
+
+  .reagent-bottle {
+    width: 48px;
+    height: 64px;
+    margin: 0 auto 6px;
+    position: relative;
+  }
+
+  .bottle-body {
+    width: 100%;
+    height: 85%;
+    border-radius: 4px 4px 8px 8px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+
+  .bottle-neck {
+    width: 50%;
+    height: 20%;
+    border-radius: 3px 3px 0 0;
+    position: absolute;
+    top: 0;
+    left: 25%;
+  }
+
+  .reagent-label { font-size: 10px; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; }
+
+  .reaction-flask {
+    width: 90px;
+    height: 120px;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+
+  #reaction-canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .meters-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .meter {
+    flex: 1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+
+  .meter-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+
+  .meter-bar-wrap {
+    height: 80px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .meter-bar {
+    width: 100%;
+    border-radius: 6px;
+    transition: height 0.3s ease;
+  }
+
+  .meter-bar.temp { background: linear-gradient(0deg, #ff4500, #ffd60a); }
+  .meter-bar.foam { background: linear-gradient(0deg, var(--blue-neon), var(--violet-neon)); }
+
+  .meter-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* ─── LAVA LAMP ─── */
+  #lava-canvas {
+    width: 100%;
+    height: 260px;
+    display: block;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .ingredient-bar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 12px;
+  }
+
+  .ingredient-chip {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid var(--panel-border);
+    border-radius: 24px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: 'Share Tech Mono', monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ingredient-chip:active { transform: scale(0.95); }
+
+  .ingredient-chip.added {
+    border-color: var(--green-neon);
+    color: var(--green-neon);
+    background: rgba(0,255,136,0.08);
+  }
+
+  /* ─── BIOPLASTICS ─── */
+  .bioplastic-scene {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .heat-control {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .heat-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .heat-icon { font-size: 24px; }
+
+  .heat-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--blue-neon), var(--yellow-sci), var(--pink-neon));
+    outline: none;
+  }
+
+  .heat-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  }
+
+  .stir-btn {
+    background: linear-gradient(135deg, var(--violet-neon), var(--blue-neon));
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    color: white;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+
+  .stir-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  .phase-indicator {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .phase-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .phase-dot.active {
+    background: var(--blue-neon);
+    border-color: var(--blue-neon);
+    box-shadow: 0 0 8px var(--blue-neon);
+  }
+
+  .phase-dot.done {
+    background: var(--green-neon);
+    border-color: var(--green-neon);
+    box-shadow: 0 0 6px var(--green-neon);
+  }
+
+  /* ─── BUTTONS ─── */
+  .btn-primary {
+    background: linear-gradient(135deg, var(--blue-neon) 0%, var(--violet-neon) 100%);
+    border: none;
+    border-radius: 14px;
+    padding: 14px 24px;
+    color: white;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(0,212,255,0.2); }
+
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+
+  .btn-primary:active::after { background: rgba(255,255,255,0.08); }
+
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 12px 20px;
+    color: var(--text-muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-secondary:active { background: rgba(255,255,255,0.05); }
+
+  /* ─── INFO BOX ─── */
+  .info-box {
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  .info-box-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--blue-neon);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .info-box p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 4px;
+  }
+
+  .formula {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: var(--violet-neon);
+    text-align: center;
+    padding: 8px;
+    background: rgba(180,77,255,0.08);
+    border-radius: 8px;
+    margin: 8px 0;
+    text-shadow: 0 0 8px var(--violet-neon);
+  }
+
+  /* ─── RESULTS ─── */
+  #screen-results {
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(ellipse at 50% 40%, rgba(0,212,255,0.06) 0%, transparent 70%);
+  }
+
+  .results-panel {
+    width: calc(100% - 40px);
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .results-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--blue-neon), var(--violet-neon), var(--blue-neon));
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 0 10px var(--blue-neon);
+  }
+
+  .results-emoji { font-size: 72px; margin-bottom: 16px; display: block; }
+
+  .results-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--blue-neon);
+    text-shadow: var(--glow-blue);
+    margin-bottom: 8px;
+  }
+
+  .results-exp {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .results-stars {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .result-star {
+    font-size: 40px;
+    animation: star-pop 0.4s ease-out backwards;
+  }
+
+  .result-star:nth-child(2) { animation-delay: 0.15s; }
+  .result-star:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes star-pop {
+    from { transform: scale(0) rotate(-20deg); opacity: 0; }
+    to { transform: scale(1) rotate(0); opacity: 1; }
+  }
+
+  .results-score {
+    font-family: 'Orbitron', monospace;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--yellow-sci);
+    text-shadow: 0 0 20px var(--yellow-sci);
+    margin-bottom: 6px;
+  }
+
+  .results-score-label { font-size: 12px; color: var(--text-muted); letter-spacing: 2px; margin-bottom: 24px; }
+
+  .results-fact {
+    background: rgba(0,212,255,0.06);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 24px;
+    text-align: left;
+  }
+
+  .results-fact-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--blue-neon);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .results-fact p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+  .results-actions { display: flex; flex-direction: column; gap: 10px; }
+
+  /* ─── QUIZ ─── */
+  #screen-quiz {
+    background: var(--bg-deep);
+  }
+
+  .quiz-question-wrap {
+    width: 100%;
+    padding: 20px 16px;
+    flex-shrink: 0;
+  }
+
+  .quiz-q-num {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .quiz-question {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    padding: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    text-align: center;
+    line-height: 1.5;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-question::before {
+    content: '?';
+    position: absolute;
+    right: -10px;
+    top: -10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 80px;
+    font-weight: 900;
+    color: rgba(0,212,255,0.05);
+    line-height: 1;
+  }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 16px 24px;
+  }
+
+  .quiz-option {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-option:active { transform: scale(0.99); }
+
+  .quiz-option.correct {
+    border-color: var(--green-neon);
+    background: rgba(0,255,136,0.1);
+    color: var(--green-neon);
+    box-shadow: 0 0 15px rgba(0,255,136,0.2);
+  }
+
+  .quiz-option.wrong {
+    border-color: var(--pink-neon);
+    background: rgba(255,45,120,0.1);
+    color: var(--pink-neon);
+  }
+
+  .quiz-opt-letter {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue-neon);
+    flex-shrink: 0;
+  }
+
+  /* ─── ENCYCLOPEDIA ─── */
+  #screen-encyclopedia {
+    background: var(--bg-deep);
+  }
+
+  .ency-list {
+    padding: 12px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .ency-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ency-card:active { transform: scale(0.99); }
+
+  .ency-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .ency-icon { font-size: 30px; }
+
+  .ency-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blue-neon);
+  }
+
+  .ency-text { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+  /* ─── TOAST ─── */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.success { color: var(--green-neon); border-color: var(--green-neon); box-shadow: 0 0 20px rgba(0,255,136,0.2); }
+  .toast.error { color: var(--pink-neon); border-color: var(--pink-neon); box-shadow: 0 0 20px rgba(255,45,120,0.2); }
+  .toast.info { color: var(--blue-neon); border-color: var(--blue-neon); }
+  .toast.gold { color: var(--yellow-sci); border-color: var(--yellow-sci); box-shadow: 0 0 20px rgba(255,214,10,0.2); }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: rgba(5,10,26,0.96);
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: none;
+    border: none;
+  }
+
+  .nav-btn:active { opacity: 0.7; }
+
+  .nav-btn.active .nav-icon { color: var(--blue-neon); text-shadow: 0 0 10px var(--blue-neon); }
+  .nav-btn.active .nav-label { color: var(--blue-neon); }
+
+  .nav-icon { font-size: 22px; color: var(--text-muted); transition: all 0.2s; }
+  .nav-label { font-size: 9px; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; transition: all 0.2s; }
+
+  /* ─── SANDBOX ─── */
+  .sandbox-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .sandbox-item {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sandbox-item:active { transform: scale(0.95); }
+  .sandbox-item-icon { font-size: 28px; margin-bottom: 6px; }
+  .sandbox-item-name { font-size: 10px; color: var(--text-muted); font-family: 'Share Tech Mono', monospace; }
+
+  #sandbox-result {
+    margin: 0 16px 16px;
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .sandbox-reaction-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* ─── FLOATING PARTICLES ─── */
+  @keyframes float-up {
+    from { transform: translateY(0) scale(1); opacity: 1; }
+    to { transform: translateY(-80px) scale(0.3); opacity: 0; }
+  }
+
+  .float-particle {
+    position: absolute;
+    pointer-events: none;
+    animation: float-up 1.5s ease-out forwards;
+    font-size: 18px;
+    z-index: 1000;
+  }
+
+  /* ─── GLOW PULSE ─── */
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(0,212,255,0.3); }
+    50% { box-shadow: 0 0 25px rgba(0,212,255,0.6), 0 0 50px rgba(0,212,255,0.2); }
+  }
+
+  .glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+  /* ─── TIMER ─── */
+  .timer-display {
+    font-family: 'Orbitron', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--yellow-sci);
+    text-shadow: 0 0 20px var(--yellow-sci);
+    text-align: center;
+    margin: 8px 0;
+  }
+
+  .timer-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 8px 0;
+  }
+
+  .timer-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--green-neon), var(--yellow-sci));
+    box-shadow: 0 0 6px var(--green-neon);
+    transition: width 1s linear, background 0.5s;
+  }
+
+  .timer-bar-fill.danger {
+    background: linear-gradient(90deg, var(--pink-neon), var(--yellow-sci));
+    box-shadow: 0 0 6px var(--pink-neon);
+  }
+
+  /* SCROLLBARS */
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 2px; }
+
+  /* ─── HELPERS ─── */
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mb-12 { margin-bottom: 12px; }
+  .text-center { text-align: center; }
+  .flex-gap-10 { display: flex; gap: 10px; }
+  .w100 { width: 100%; }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- ═══════ SPLASH ═══════ -->
+  <div id="screen-splash" class="screen active">
+    <div class="splash-content">
+      <svg class="flask-icon" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M42 10 h36 v50 l30 48 H12 L42 60 Z" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M42 60 l-30 48 h96 l-30-48" fill="rgba(180,77,255,0.15)"/>
+        <circle cx="55" cy="80" r="6" fill="#00ff88" opacity="0.9">
+          <animate attributeName="cy" values="80;72;80" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.9;0.5;0.9" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="75" cy="90" r="4" fill="#b44dff" opacity="0.8">
+          <animate attributeName="cy" values="90;82;90" dur="1.6s" repeatCount="indefinite" begin="0.5s"/>
+        </circle>
+        <circle cx="45" cy="95" r="3" fill="#00d4ff" opacity="0.7">
+          <animate attributeName="cy" values="95;88;95" dur="2.2s" repeatCount="indefinite" begin="0.3s"/>
+        </circle>
+        <rect x="48" y="6" width="24" height="8" rx="4" fill="#00d4ff" opacity="0.6"/>
+        <line x1="30" y1="60" x2="90" y2="60" stroke="rgba(0,212,255,0.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      </svg>
+
+      <div class="splash-title">QUÍMICA<br>LAB</div>
+      <div class="splash-subtitle">CHALLENGE</div>
+
+      <div class="splash-loading">
+        <div class="splash-loading-bar"></div>
+      </div>
+      <div class="splash-text">INICIALIZANDO LABORATORIO...</div>
+    </div>
+  </div>
+
+  <!-- ═══════ MENU PRINCIPAL ═══════ -->
+  <div id="screen-menu" class="screen">
+    <div class="hud">
+      <div class="hud-coins">⚗️ <span id="hud-coins">0</span></div>
+      <div style="text-align:center">
+        <div class="hud-level" id="hud-rank">NOVATO</div>
+        <div class="hud-xp" id="hud-xp-text">0 / 200 XP</div>
+      </div>
+      <div style="font-size:22px">🔬</div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+    </div>
+
+    <div class="menu-scroll">
+      <div class="section-label">MODOS DE JUEGO</div>
+      <div class="mode-cards">
+        <div class="mode-card story" onclick="goToExpSelect()">
+          <div class="mode-card-icon">🏛️</div>
+          <div class="mode-card-name">MODO HISTORIA</div>
+          <div class="mode-card-desc">Completa experimentos y sube de nivel</div>
+        </div>
+        <div class="mode-card challenge" onclick="startQuiz()">
+          <div class="mode-card-icon">⚡</div>
+          <div class="mode-card-name">QUIZ RÁPIDO</div>
+          <div class="mode-card-desc">Preguntas contra el tiempo</div>
+        </div>
+      </div>
+
+      <div class="section-label">EXPERIMENTOS</div>
+      <div class="exp-list">
+        <div class="exp-card lv1" onclick="startExperiment(0)">
+          <div class="exp-icon">🔦</div>
+          <div class="exp-info">
+            <div class="exp-name">Efecto Tyndall</div>
+            <div class="exp-desc">Identifica coloides con un láser</div>
+            <div class="stars" id="stars-0">
+              <span class="star">⭐</span><span class="star empty">⭐</span><span class="star empty">⭐</span>
+            </div>
+          </div>
+          <div class="exp-badge badge-available">LV.1</div>
+        </div>
+        <div class="exp-card lv2" onclick="startExperiment(1)">
+          <div class="exp-icon">🐘</div>
+          <div class="exp-info">
+            <div class="exp-name">Pasta de Elefante</div>
+            <div class="exp-desc">Mezcla reactivos y crea espuma gigante</div>
+            <div class="stars" id="stars-1">
+              <span class="star empty">⭐</span><span class="star empty">⭐</span><span class="star empty">⭐</span>
+            </div>
+          </div>
+          <div class="exp-badge badge-available">LV.2</div>
+        </div>
+        <div class="exp-card lv3" onclick="startExperiment(2)">
+          <div class="exp-icon">🫧</div>
+          <div class="exp-info">
+            <div class="exp-name">Lámpara de Lava</div>
+            <div class="exp-desc">Aceite, agua y CO₂ en acción</div>
+            <div class="stars" id="stars-2">
+              <span class="star empty">⭐</span><span class="star empty">⭐</span><span class="star empty">⭐</span>
+            </div>
+          </div>
+          <div class="exp-badge badge-available">LV.3</div>
+        </div>
+        <div class="exp-card lv4" onclick="startExperiment(3)">
+          <div class="exp-icon">🧪</div>
+          <div class="exp-info">
+            <div class="exp-name">Bioplásticos</div>
+            <div class="exp-desc">Fabrica plástico ecológico con maicena</div>
+            <div class="stars" id="stars-3">
+              <span class="star empty">⭐</span><span class="star empty">⭐</span><span class="star empty">⭐</span>
+            </div>
+          </div>
+          <div class="exp-badge badge-available">LV.4</div>
+        </div>
+      </div>
+
+      <div class="section-label">EXTRAS</div>
+      <div class="mode-cards">
+        <div class="mode-card" onclick="openSandbox()">
+          <div class="mode-card-icon">🔭</div>
+          <div class="mode-card-name">SANDBOX</div>
+          <div class="mode-card-desc">Mezcla libremente</div>
+        </div>
+        <div class="mode-card" onclick="openEncyclopedia()">
+          <div class="mode-card-icon">📚</div>
+          <div class="mode-card-name">ENCICLOPEDIA</div>
+          <div class="mode-card-desc">Aprende química</div>
+        </div>
+      </div>
+
+      <div style="height:80px"></div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn active" onclick="showMenu()">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">INICIO</span>
+      </button>
+      <button class="nav-btn" onclick="goToExpSelect()">
+        <span class="nav-icon">⚗️</span>
+        <span class="nav-label">LAB</span>
+      </button>
+      <button class="nav-btn" onclick="startQuiz()">
+        <span class="nav-icon">❓</span>
+        <span class="nav-label">QUIZ</span>
+      </button>
+      <button class="nav-btn" onclick="openEncyclopedia()">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">DATOS</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════ EXPERIMENT ═══════ -->
+  <div id="screen-experiment" class="screen">
+    <div class="exp-hud">
+      <div class="btn-back" onclick="showMenu()">←</div>
+      <div class="exp-progress-wrap">
+        <div class="exp-progress-title" id="exp-progress-title">PROGRESO</div>
+        <div class="exp-progress-bar">
+          <div class="exp-progress-fill" id="exp-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="exp-score-hud" id="exp-score-display">0</div>
+    </div>
+
+    <div class="exp-body" id="exp-body">
+      <!-- Dynamic content -->
+    </div>
+  </div>
+
+  <!-- ═══════ RESULTS ═══════ -->
+  <div id="screen-results" class="screen">
+    <div class="results-panel">
+      <span class="results-emoji" id="res-emoji">🏆</span>
+      <div class="results-title" id="res-title">¡EXPERIMENTO COMPLETADO!</div>
+      <div class="results-exp" id="res-exp-name"></div>
+      <div class="results-stars" id="res-stars"></div>
+      <div class="results-score" id="res-score">0</div>
+      <div class="results-score-label">PUNTOS DE CIENCIA</div>
+      <div class="results-fact">
+        <div class="results-fact-title">💡 ¿SABÍAS QUE...?</div>
+        <p id="res-fact"></p>
+      </div>
+      <div class="results-actions">
+        <button class="btn-primary" onclick="showMenu()">🏠 MENÚ PRINCIPAL</button>
+        <button class="btn-secondary" onclick="nextExperiment()">➡️ SIGUIENTE EXPERIMENTO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════ QUIZ ═══════ -->
+  <div id="screen-quiz" class="screen">
+    <div class="exp-hud">
+      <div class="btn-back" onclick="showMenu()">←</div>
+      <div class="exp-progress-wrap">
+        <div class="exp-progress-title">PREGUNTA <span id="quiz-num">1</span>/10</div>
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="quiz-timer-bar" style="width:100%"></div>
+        </div>
+      </div>
+      <div class="exp-score-hud" id="quiz-score-display">0</div>
+    </div>
+    <div class="timer-display" id="quiz-timer">15</div>
+
+    <div class="quiz-question-wrap">
+      <div class="quiz-q-num" id="quiz-q-label">PREGUNTA 1 DE 10</div>
+      <div class="quiz-question" id="quiz-question">Cargando pregunta...</div>
+    </div>
+    <div class="quiz-options" id="quiz-options"></div>
+  </div>
+
+  <!-- ═══════ ENCYCLOPEDIA ═══════ -->
+  <div id="screen-encyclopedia" class="screen">
+    <div class="exp-hud">
+      <div class="btn-back" onclick="showMenu()">←</div>
+      <div class="exp-progress-wrap">
+        <div class="exp-progress-title">ENCICLOPEDIA QUÍMICA</div>
+        <div class="exp-progress-bar"><div class="exp-progress-fill" style="width:100%"></div></div>
+      </div>
+      <div style="font-size:22px">📚</div>
+    </div>
+    <div class="ency-list" id="ency-list"></div>
+  </div>
+
+  <!-- ═══════ SANDBOX ═══════ -->
+  <div id="screen-sandbox" class="screen">
+    <div class="exp-hud">
+      <div class="btn-back" onclick="showMenu()">←</div>
+      <div class="exp-progress-wrap">
+        <div class="exp-progress-title">LABORATORIO LIBRE</div>
+        <div class="exp-progress-bar"><div class="exp-progress-fill" style="width:100%"></div></div>
+      </div>
+      <div style="font-size:22px">🔭</div>
+    </div>
+
+    <div style="padding:12px 16px; width:100%">
+      <div class="phase-label">ELIGE SUSTANCIAS PARA MEZCLAR</div>
+      <div id="sandbox-selected" style="display:flex;gap:8px;flex-wrap:wrap;min-height:36px;margin-bottom:10px;padding:8px;background:rgba(0,212,255,0.04);border:1px solid var(--panel-border);border-radius:10px;align-items:center">
+        <span style="font-size:12px;color:var(--text-muted)">Ninguna seleccionada</span>
+      </div>
+      <button class="btn-primary mb-12" style="margin-bottom:12px" onclick="runSandbox()">⚗️ MEZCLAR</button>
+    </div>
+
+    <div class="sandbox-grid" id="sandbox-grid"></div>
+
+    <div id="sandbox-result">
+      <div class="sandbox-reaction-text" id="sandbox-result-text" style="color:var(--text-muted)">
+        Selecciona ingredientes y presiona MEZCLAR
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+const state = {
+  coins: 0,
+  xp: 0,
+  xpNext: 200,
+  rank: 0,
+  currentExp: 0,
+  expScore: 0,
+  expStars: [0, 0, 0, 0],
+  quizScore: 0,
+  quizQ: 0,
+  quizTimer: null,
+  quizTimeLeft: 15,
+  sandboxSelected: []
+};
+
+const RANKS = ['NOVATO', 'INVESTIGADOR', 'QUÍMICO', 'PROFESOR', 'MAESTRO DEL LAB'];
+const XP_THRESHOLDS = [200, 500, 1000, 2000, 9999];
+
+// ═══════════════════════════════════════════════════════════════
+// PARTICLES
+// ═══════════════════════════════════════════════════════════════
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  const app = document.getElementById('app');
+  canvas.width = app.offsetWidth;
+  canvas.height = app.offsetHeight;
+}
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.size = Math.random() * 2.5 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.4;
+    this.speedY = (Math.random() - 0.5) * 0.4;
+    this.alpha = Math.random() * 0.5 + 0.1;
+    this.hue = Math.random() > 0.5 ? '200' : '270';
+  }
+  update() {
+    this.x += this.speedX;
+    this.y += this.speedY;
+    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.hue},100%,65%,${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+function initParticles() {
+  resizeCanvas();
+  particles = [];
+  for (let i = 0; i < 60; i++) particles.push(new Particle());
+}
+
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showMenu() {
+  clearTimers();
+  updateHUD();
+  showScreen('screen-menu');
+}
+
+function goToExpSelect() { showMenu(); }
+
+function clearTimers() {
+  if (state.quizTimer) { clearInterval(state.quizTimer); state.quizTimer = null; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════════════════════════════
+function updateHUD() {
+  document.getElementById('hud-coins').textContent = state.coins;
+  const r = RANKS[Math.min(state.rank, RANKS.length-1)];
+  document.getElementById('hud-rank').textContent = r;
+  const threshold = XP_THRESHOLDS[state.rank] || 9999;
+  const prevThreshold = state.rank > 0 ? XP_THRESHOLDS[state.rank-1] : 0;
+  const pct = Math.min(((state.xp - prevThreshold) / (threshold - prevThreshold)) * 100, 100);
+  document.getElementById('xp-bar').style.width = pct + '%';
+  document.getElementById('hud-xp-text').textContent = `${state.xp} / ${threshold} XP`;
+}
+
+function addXP(amount) {
+  state.xp += amount;
+  const threshold = XP_THRESHOLDS[state.rank] || 9999;
+  if (state.xp >= threshold && state.rank < RANKS.length - 1) {
+    state.rank++;
+    showToast('🎉 ¡NUEVO RANGO: ' + RANKS[state.rank] + '!', 'gold');
+  }
+  updateHUD();
+}
+
+function addCoins(amount) {
+  state.coins += amount;
+  updateHUD();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════════
+function showToast(msg, type = 'info', duration = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast ' + type; }, duration);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FLOATING PARTICLES
+// ═══════════════════════════════════════════════════════════════
+function spawnFloatParticle(x, y, emoji) {
+  const el = document.createElement('div');
+  el.className = 'float-particle';
+  el.textContent = emoji;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.getElementById('app').appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERIMENT DATA
+// ═══════════════════════════════════════════════════════════════
+const EXPERIMENTS = [
+  {
+    id: 0,
+    name: 'Efecto Tyndall',
+    emoji: '🔦',
+    color: '#00d4ff',
+    fact: 'El Efecto Tyndall fue descubierto por John Tyndall en 1869. Explica por qué el cielo es azul y por qué los faros de los autos se ven en la niebla.',
+    build: buildTyndall
+  },
+  {
+    id: 1,
+    name: 'Pasta de Elefante',
+    emoji: '🐘',
+    color: '#ff2d78',
+    fact: 'La reacción de la pasta de elefante libera tanta energía que la espuma resultante puede alcanzar temperaturas de 200°C. ¡Es una reacción exotérmica espectacular!',
+    build: buildElephantToothpaste
+  },
+  {
+    id: 2,
+    name: 'Lámpara de Lava',
+    emoji: '🫧',
+    color: '#b44dff',
+    fact: 'El aceite flota sobre el agua porque su densidad (~0.91 g/cm³) es menor que la del agua (1 g/cm³). Son inmiscibles porque sus moléculas tienen diferente polaridad.',
+    build: buildLavaLamp
+  },
+  {
+    id: 3,
+    name: 'Bioplástico',
+    emoji: '🧪',
+    color: '#00ff88',
+    fact: 'Los bioplásticos de almidón son 100% biodegradables y pueden descomponerse en pocas semanas. Son una alternativa sustentable al plástico tradicional.',
+    build: buildBioplastic
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+// START EXPERIMENT
+// ═══════════════════════════════════════════════════════════════
+function startExperiment(index) {
+  state.currentExp = index;
+  state.expScore = 0;
+  document.getElementById('exp-score-display').textContent = '0';
+  document.getElementById('exp-progress-fill').style.width = '0%';
+  document.getElementById('exp-progress-title').textContent = EXPERIMENTS[index].name.toUpperCase();
+  EXPERIMENTS[index].build();
+  showScreen('screen-experiment');
+}
+
+function nextExperiment() {
+  const next = (state.currentExp + 1) % EXPERIMENTS.length;
+  startExperiment(next);
+}
+
+function setProgress(pct) {
+  document.getElementById('exp-progress-fill').style.width = pct + '%';
+}
+
+function addExpScore(pts) {
+  state.expScore += pts;
+  document.getElementById('exp-score-display').textContent = state.expScore;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESULTS SCREEN
+// ═══════════════════════════════════════════════════════════════
+function showResults(score, stars, expIndex) {
+  state.expStars[expIndex] = Math.max(state.expStars[expIndex], stars);
+  updateStarsDisplay(expIndex, state.expStars[expIndex]);
+
+  const exp = EXPERIMENTS[expIndex];
+  document.getElementById('res-emoji').textContent = stars >= 3 ? '🏆' : stars >= 2 ? '🥈' : '🥉';
+  document.getElementById('res-title').textContent = stars >= 3 ? '¡PERFECTO!' : stars >= 2 ? '¡MUY BIEN!' : '¡COMPLETADO!';
+  document.getElementById('res-exp-name').textContent = exp.name;
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-fact').textContent = exp.fact;
+
+  const starsEl = document.getElementById('res-stars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'result-star';
+    s.textContent = i < stars ? '⭐' : '☆';
+    s.style.animationDelay = (i * 0.15) + 's';
+    starsEl.appendChild(s);
+  }
+
+  addXP(score / 2);
+  addCoins(score / 10);
+  showScreen('screen-results');
+}
+
+function updateStarsDisplay(expIndex, stars) {
+  const el = document.getElementById('stars-' + expIndex);
+  if (!el) return;
+  const sEls = el.querySelectorAll('.star');
+  sEls.forEach((s, i) => {
+    s.classList.toggle('empty', i >= stars);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERIMENT 1: TYNDALL
+// ═══════════════════════════════════════════════════════════════
+const MIXTURES = [
+  { name: 'Agua + Sal', icon: '🧂', type: 'Solución verdadera', isColloid: false },
+  { name: 'Leche diluida', icon: '🥛', type: 'Coloide', isColloid: true },
+  { name: 'Agua + Azúcar', icon: '🍬', type: 'Solución verdadera', isColloid: false },
+  { name: 'Niebla', icon: '🌫️', type: 'Coloide', isColloid: true }
+];
+
+let tyndallCanvas, tyndallCtx, selectedMixture = null, tyndallAnimId = null;
+let tyndallPhase = 'select'; // select | laser | result
+let laserAngle = 0, laserActive = false;
+let tyndallParticles = [];
+
+function buildTyndall() {
+  const body = document.getElementById('exp-body');
+  body.innerHTML = `
+    <div class="exp-intro">
+      <span class="exp-intro-emoji">🔦</span>
+      <div class="exp-intro-title">Efecto Tyndall</div>
+      <div class="exp-intro-desc">Apunta un rayo láser sobre distintas mezclas. ¿En cuáles se ve el haz de luz?</div>
+    </div>
+    <div class="tyndall-scene">
+      <div class="tyndall-canvas-wrap">
+        <canvas id="tyndall-canvas"></canvas>
+      </div>
+      <div class="tyndall-options">
+        ${MIXTURES.map((m,i) => `
+          <div class="mix-option" id="mix-${i}" onclick="selectMixture(${i})">
+            <div class="mix-icon">${m.icon}</div>
+            <div class="mix-name">${m.name}</div>
+            <div class="mix-type" style="font-size:9px">${m.type}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">📡 INSTRUCCIÓN</div>
+      <p>Selecciona una mezcla, luego toca la escena para apuntar el láser. Observa si el haz de luz se hace visible.</p>
+    </div>
+    <div id="tyndall-btn-wrap" style="display:none">
+      <button class="btn-primary" onclick="fireLaser()">🔦 DISPARAR LÁSER</button>
+    </div>
+    <div style="height:16px"></div>
+  `;
+
+  tyndallCanvas = document.getElementById('tyndall-canvas');
+  const wrap = tyndallCanvas.parentElement;
+  tyndallCanvas.width = wrap.offsetWidth;
+  tyndallCanvas.height = wrap.offsetHeight;
+  tyndallCtx = tyndallCanvas.getContext('2d');
+  tyndallPhase = 'select';
+  selectedMixture = null;
+  laserActive = false;
+  tyndallParticles = [];
+  tyndallCanvas.addEventListener('click', fireLaserAt);
+  drawTyndallScene();
+  setProgress(10);
+}
+
+function drawTyndallScene() {
+  if (!tyndallCtx) return;
+  const c = tyndallCtx;
+  const w = tyndallCanvas.width, h = tyndallCanvas.height;
+  c.clearRect(0, 0, w, h);
+
+  // Background
+  const bg = c.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#01030a');
+  bg.addColorStop(1, '#02060f');
+  c.fillStyle = bg;
+  c.fillRect(0, 0, w, h);
+
+  // Draw beaker
+  const bx = w / 2, by = h * 0.15, bw = w * 0.35, bh = h * 0.6;
+  c.strokeStyle = 'rgba(0,212,255,0.5)';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.moveTo(bx - bw/2, by);
+  c.lineTo(bx - bw/2, by + bh);
+  c.lineTo(bx + bw/2, by + bh);
+  c.lineTo(bx + bw/2, by);
+  c.stroke();
+
+  // Liquid in beaker
+  const liqColor = selectedMixture !== null
+    ? MIXTURES[selectedMixture].isColloid ? 'rgba(220,220,230,0.15)' : 'rgba(180,240,255,0.12)'
+    : 'rgba(0,212,255,0.06)';
+  c.fillStyle = liqColor;
+  c.fillRect(bx - bw/2 + 1, by + bh * 0.1, bw - 2, bh * 0.88);
+
+  // Laser source
+  const lx = 15, ly = h * 0.5;
+  c.fillStyle = '#ff2020';
+  c.beginPath();
+  c.roundRect(lx, ly - 10, 28, 20, 4);
+  c.fill();
+  c.fillStyle = '#ff4444';
+  c.beginPath();
+  c.arc(lx + 28, ly, 4, 0, Math.PI * 2);
+  c.fill();
+
+  if (laserActive && selectedMixture !== null) {
+    const mix = MIXTURES[selectedMixture];
+    const laserEndX = bx + bw/2;
+    const laserStartX = lx + 32;
+
+    // Laser beam
+    const grad = c.createLinearGradient(laserStartX, ly, laserEndX, ly);
+    grad.addColorStop(0, 'rgba(255,30,30,0.9)');
+    grad.addColorStop(1, 'rgba(255,30,30,0.4)');
+    c.beginPath();
+    c.moveTo(laserStartX, ly);
+    c.lineTo(laserEndX, ly);
+    c.strokeStyle = grad;
+    c.lineWidth = 3;
+    c.stroke();
+
+    if (mix.isColloid) {
+      // Tyndall glow in beaker
+      const innerGrad = c.createLinearGradient(bx - bw/2, ly, bx + bw/2, ly);
+      innerGrad.addColorStop(0, 'rgba(255,200,100,0)');
+      innerGrad.addColorStop(0.1, 'rgba(255,200,100,0.6)');
+      innerGrad.addColorStop(0.5, 'rgba(255,200,100,0.4)');
+      innerGrad.addColorStop(1, 'rgba(255,200,100,0)');
+      c.beginPath();
+      c.moveTo(bx - bw/2, ly - 15);
+      c.lineTo(bx + bw/2, ly - 8);
+      c.lineTo(bx + bw/2, ly + 8);
+      c.lineTo(bx - bw/2, ly + 15);
+      c.closePath();
+      c.fillStyle = innerGrad;
+      c.fill();
+
+      // Particles
+      tyndallParticles.forEach(p => {
+        c.beginPath();
+        c.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        c.fillStyle = `rgba(255,210,120,${p.a})`;
+        c.fill();
+      });
+    } else {
+      // Clean pass-through
+      c.beginPath();
+      c.moveTo(bx - bw/2, ly);
+      c.lineTo(bx + bw/2, ly);
+      c.strokeStyle = 'rgba(255,30,30,0.5)';
+      c.lineWidth = 2;
+      c.stroke();
+    }
+  }
+
+  // Labels
+  if (selectedMixture !== null) {
+    c.fillStyle = 'rgba(0,212,255,0.8)';
+    c.font = '11px Share Tech Mono';
+    c.textAlign = 'center';
+    c.fillText(MIXTURES[selectedMixture].name, bx, by - 8);
+  }
+
+  if (laserActive && selectedMixture !== null) {
+    requestAnimationFrame(() => {
+      tyndallParticles.forEach(p => {
+        p.x += p.vx;
+        if (p.x < bx - bw/2 || p.x > bx + bw/2) p.x = bx - bw/2 + Math.random() * bw;
+        p.a = 0.3 + Math.sin(Date.now() * 0.003 + p.phase) * 0.3;
+      });
+      drawTyndallScene();
+    });
+  }
+}
+
+function selectMixture(i) {
+  selectedMixture = i;
+  document.querySelectorAll('.mix-option').forEach((el, j) => {
+    el.classList.toggle('selected', j === i);
+  });
+  document.getElementById('tyndall-btn-wrap').style.display = 'block';
+  laserActive = false;
+  tyndallParticles = [];
+
+  // Generate particles in beaker
+  const w = tyndallCanvas.width, h = tyndallCanvas.height;
+  const bx = w/2, by = h*0.15, bw = w*0.35, bh = h*0.6;
+  if (MIXTURES[i].isColloid) {
+    for (let p = 0; p < 40; p++) {
+      tyndallParticles.push({
+        x: bx - bw/2 + Math.random() * bw,
+        y: by + bh * 0.1 + Math.random() * bh * 0.8,
+        r: Math.random() * 2.5 + 0.5,
+        vx: (Math.random() - 0.5) * 0.5,
+        a: Math.random() * 0.5,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  setProgress(40);
+  drawTyndallScene();
+  showToast('💡 Seleccionado: ' + MIXTURES[i].name, 'info');
+}
+
+function fireLaserAt() {
+  if (selectedMixture === null) { showToast('¡Selecciona una mezcla primero!', 'error'); return; }
+  fireLaser();
+}
+
+function fireLaser() {
+  if (selectedMixture === null) { showToast('¡Elige una mezcla!', 'error'); return; }
+  laserActive = true;
+  const mix = MIXTURES[selectedMixture];
+  drawTyndallScene();
+  setProgress(80);
+
+  setTimeout(() => {
+    const el = document.getElementById('mix-' + selectedMixture);
+    if (mix.isColloid) {
+      el.classList.add('correct');
+      showToast('✅ ¡Efecto Tyndall visible! +100pts', 'success');
+      addExpScore(100);
+      spawnFloatParticle(100, 200, '⭐');
+      spawnFloatParticle(200, 180, '✨');
+    } else {
+      el.classList.add('wrong');
+      showToast('❌ Solución verdadera – no dispersa la luz', 'error');
+      addExpScore(20);
+    }
+    setProgress(100);
+
+    setTimeout(() => {
+      checkAllTyndall();
+    }, 1200);
+  }, 800);
+}
+
+let tyndallCorrect = 0;
+function checkAllTyndall() {
+  tyndallCorrect++;
+  if (tyndallCorrect >= 2) {
+    const stars = state.expScore >= 300 ? 3 : state.expScore >= 150 ? 2 : 1;
+    setTimeout(() => showResults(state.expScore, stars, 0), 500);
+    tyndallCorrect = 0;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERIMENT 2: ELEPHANT TOOTHPASTE
+// ═══════════════════════════════════════════════════════════════
+const REAGENTS = [
+  { name: 'H₂O₂', label: 'Peróxido', color: '#a0d8ef', cap: '#0088cc', step: 1 },
+  { name: 'Jabón', label: 'Jabón', color: '#f7c5e3', cap: '#cc44aa', step: 2 },
+  { name: 'Colorante', label: 'Colorante', color: '#c5f5a0', cap: '#44aa00', step: 3 },
+  { name: 'Levadura', label: 'Catalizador', color: '#f5d5a0', cap: '#cc8800', step: 4 }
+];
+
+let etPhase = 0, etCanvas, etCtx, foamLevel = 0, tempLevel = 0, etAnimId = null;
+let etParticles = [];
+
+function buildElephantToothpaste() {
+  const body = document.getElementById('exp-body');
+  body.innerHTML = `
+    <div class="exp-intro">
+      <span class="exp-intro-emoji">🐘</span>
+      <div class="exp-intro-title">Pasta de Elefante</div>
+      <div class="exp-intro-desc">Agrega los reactivos en el orden correcto para crear una explosión de espuma.</div>
+    </div>
+    <div class="lab-bench">
+      <div class="phase-label">REACTIVOS — TOCA PARA AGREGAR EN ORDEN</div>
+      <div class="reagent-shelf" id="reagent-shelf">
+        ${REAGENTS.map((r,i) => `
+          <div class="reagent" id="reagent-${i}" onclick="addReagent(${i})">
+            <div class="reagent-bottle">
+              <div class="bottle-neck" style="background:${r.cap}"></div>
+              <div class="bottle-body" style="background:${r.color};opacity:0.85"></div>
+            </div>
+            <div class="reagent-label">${r.label}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="reaction-flask" id="reaction-flask">
+        <canvas id="reaction-canvas" width="90" height="120"></canvas>
+      </div>
+
+      <div class="formula">2 H₂O₂ → 2 H₂O + O₂ ↑</div>
+
+      <div class="meters-row" style="margin-top:12px">
+        <div class="meter">
+          <div class="meter-label">TEMP</div>
+          <div class="meter-bar-wrap">
+            <div class="meter-bar temp" id="meter-temp" style="height:0%"></div>
+          </div>
+          <div class="meter-value" id="temp-val" style="color:#ff4500">0°C</div>
+        </div>
+        <div class="meter">
+          <div class="meter-label">ESPUMA</div>
+          <div class="meter-bar-wrap">
+            <div class="meter-bar foam" id="meter-foam" style="height:0%"></div>
+          </div>
+          <div class="meter-value" id="foam-val" style="color:var(--blue-neon)">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">🧪 REACCIÓN QUÍMICA</div>
+      <p>El peróxido de hidrógeno se descompone con el catalizador, liberando oxígeno. El jabón atrapa el gas formando espuma gigante. ¡Es exotérmica!</p>
+    </div>
+    <div style="height:16px"></div>
+  `;
+
+  etCanvas = document.getElementById('reaction-canvas');
+  etCtx = etCanvas.getContext('2d');
+  etPhase = 0; foamLevel = 0; tempLevel = 0;
+  etParticles = [];
+  drawFlask();
+  setProgress(5);
+}
+
+function drawFlask() {
+  if (!etCtx) return;
+  const c = etCtx;
+  c.clearRect(0, 0, 90, 120);
+
+  // Flask outline
+  c.strokeStyle = 'rgba(0,212,255,0.6)';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.moveTo(32, 8);
+  c.lineTo(32, 50);
+  c.lineTo(10, 110);
+  c.lineTo(80, 110);
+  c.lineTo(58, 50);
+  c.lineTo(58, 8);
+  c.stroke();
+
+  // Neck connector
+  c.strokeStyle = 'rgba(0,212,255,0.4)';
+  c.beginPath();
+  c.moveTo(32, 8);
+  c.lineTo(58, 8);
+  c.stroke();
+
+  // Liquid based on phase
+  if (etPhase >= 1) {
+    const lh = Math.min(foamLevel * 0.6, 0.9);
+    const ly = 110 - lh * 80;
+    const lg = c.createLinearGradient(10, ly, 80, 110);
+    lg.addColorStop(0, etPhase >= 4 ? 'rgba(255,150,50,0.8)' : 'rgba(0,212,255,0.6)');
+    lg.addColorStop(1, etPhase >= 4 ? 'rgba(255,80,20,0.4)' : 'rgba(180,77,255,0.3)');
+    c.fillStyle = lg;
+    c.beginPath();
+    c.moveTo(10, 110);
+    c.lineTo(80, 110);
+    c.lineTo(58 + (foamLevel > 0.5 ? (foamLevel-0.5)*10 : 0), ly);
+    c.lineTo(32 - (foamLevel > 0.5 ? (foamLevel-0.5)*10 : 0), ly);
+    c.closePath();
+    c.fill();
+  }
+
+  // Foam overflow
+  if (foamLevel > 0.7) {
+    const excess = (foamLevel - 0.7) * 3;
+    c.fillStyle = 'rgba(255,255,255,0.25)';
+    for (let i = 0; i < 8; i++) {
+      c.beginPath();
+      c.arc(45 + (i-4)*10, 8 - excess * 20 - Math.random()*5, 6 + Math.random()*4, 0, Math.PI*2);
+      c.fill();
+    }
+  }
+
+  // Glow effect when hot
+  if (tempLevel > 0.5) {
+    c.shadowColor = '#ff4500';
+    c.shadowBlur = 20 * tempLevel;
+    c.strokeStyle = `rgba(255,100,0,${tempLevel*0.5})`;
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(32, 8);
+    c.lineTo(32, 50);
+    c.lineTo(10, 110);
+    c.lineTo(80, 110);
+    c.lineTo(58, 50);
+    c.lineTo(58, 8);
+    c.stroke();
+    c.shadowBlur = 0;
+  }
+}
+
+function addReagent(i) {
+  if (REAGENTS[i].step !== etPhase + 1) {
+    showToast(`⚠️ Primero agrega: ${REAGENTS[etPhase]?.label || 'el reactivo correcto'}`, 'error');
+    const el = document.getElementById('reagent-' + i);
+    el.style.transform = 'translateX(-8px)';
+    setTimeout(() => el.style.transform = '', 300);
+    return;
+  }
+  etPhase++;
+  const el = document.getElementById('reagent-' + i);
+  el.classList.add('used');
+
+  foamLevel = Math.min(foamLevel + 0.2 + etPhase * 0.1, 1);
+  if (etPhase >= 3) tempLevel = Math.min(tempLevel + 0.3, 1);
+
+  document.getElementById('meter-foam').style.height = (foamLevel * 100) + '%';
+  document.getElementById('foam-val').textContent = Math.round(foamLevel * 100) + '%';
+  document.getElementById('meter-temp').style.height = (tempLevel * 100) + '%';
+  document.getElementById('temp-val').textContent = Math.round(tempLevel * 200) + '°C';
+
+  addExpScore(50 + etPhase * 10);
+  setProgress(etPhase * 25);
+  showToast('✅ ' + REAGENTS[i].label + ' añadido', 'success');
+  spawnFloatParticle(200, 300, ['💧', '🫧', '🎨', '⚗️'][i]);
+
+  drawFlask();
+
+  if (etPhase === 4) {
+    setTimeout(() => {
+      foamLevel = 1;
+      tempLevel = 0.8;
+      drawFlask();
+      showToast('🐘 ¡PASTA DE ELEFANTE! +200pts', 'gold', 3000);
+      addExpScore(200);
+      spawnFloatParticle(100, 200, '🎉');
+      spawnFloatParticle(300, 180, '⭐');
+      setTimeout(() => {
+        const stars = state.expScore >= 450 ? 3 : state.expScore >= 300 ? 2 : 1;
+        showResults(state.expScore, stars, 1);
+      }, 2000);
+    }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERIMENT 3: LAVA LAMP
+// ═══════════════════════════════════════════════════════════════
+const LAVA_INGREDIENTS = [
+  { name: 'Agua', icon: '💧', color: 'rgba(100,180,255,0.7)', density: 1.0 },
+  { name: 'Aceite', icon: '🫙', color: 'rgba(255,210,80,0.6)', density: 0.85 },
+  { name: 'Colorante', icon: '🎨', color: 'rgba(180,50,255,0.8)', density: 1.0 },
+  { name: 'Pastilla', icon: '💊', color: 'rgba(255,255,255,0.9)', density: 1.5 }
+];
+
+let lavaCanvas, lavaCtx, lavaDrops = [], lavaAnimId = null;
+let lavaPhase = 0, lavaAdded = [];
+
+function buildLavaLamp() {
+  const body = document.getElementById('exp-body');
+  body.innerHTML = `
+    <div class="exp-intro">
+      <span class="exp-intro-emoji">🫧</span>
+      <div class="exp-intro-title">Lámpara de Lava</div>
+      <div class="exp-intro-desc">Agrega los ingredientes en el orden correcto y observa la magia de la densidad.</div>
+    </div>
+    <div class="lab-bench">
+      <canvas id="lava-canvas"></canvas>
+      <div class="ingredient-bar" id="ingredient-bar">
+        ${LAVA_INGREDIENTS.map((ing, i) => `
+          <div class="ingredient-chip" id="chip-${i}" onclick="addLavaIngredient(${i})">
+            <span>${ing.icon}</span><span>${ing.name}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">⚗️ DENSIDAD E INMISCIBILIDAD</div>
+      <p>El aceite (0.85 g/cm³) es menos denso que el agua (1.0 g/cm³), por eso flota. Al agregar la pastilla, libera CO₂ que arrastra gotas de agua hacia arriba.</p>
+    </div>
+    <div style="height:16px"></div>
+  `;
+
+  lavaCanvas = document.getElementById('lava-canvas');
+  const lw = lavaCanvas.parentElement.offsetWidth - 32;
+  lavaCanvas.width = lw;
+  lavaCanvas.height = 260;
+  lavaCtx = lavaCanvas.getContext('2d');
+  lavaDrops = []; lavaAdded = []; lavaPhase = 0;
+
+  if (lavaAnimId) cancelAnimationFrame(lavaAnimId);
+  drawLavaLamp();
+  setProgress(5);
+}
+
+function drawLavaLamp() {
+  if (!lavaCtx) return;
+  const c = lavaCtx;
+  const w = lavaCanvas.width, h = lavaCanvas.height;
+  c.clearRect(0, 0, w, h);
+
+  // Bottle shape
+  const bx = w/2, bw = w * 0.5, bh = h * 0.88, by = h * 0.06;
+  const bottleGrad = c.createLinearGradient(bx-bw/2, 0, bx+bw/2, 0);
+  bottleGrad.addColorStop(0, 'rgba(0,212,255,0.03)');
+  bottleGrad.addColorStop(0.3, 'rgba(0,212,255,0.08)');
+  bottleGrad.addColorStop(0.7, 'rgba(0,212,255,0.08)');
+  bottleGrad.addColorStop(1, 'rgba(0,212,255,0.03)');
+  c.fillStyle = bottleGrad;
+  c.strokeStyle = 'rgba(0,212,255,0.4)';
+  c.lineWidth = 2;
+  c.beginPath();
+  c.roundRect(bx - bw/2, by, bw, bh, 8);
+  c.fill();
+  c.stroke();
+
+  // Water layer
+  if (lavaAdded.includes(0)) {
+    const waterH = bh * 0.5;
+    const wg = c.createLinearGradient(0, by + bh - waterH, 0, by + bh);
+    wg.addColorStop(0, lavaAdded.includes(2) ? 'rgba(180,50,255,0.4)' : 'rgba(100,180,255,0.4)');
+    wg.addColorStop(1, lavaAdded.includes(2) ? 'rgba(120,30,200,0.6)' : 'rgba(50,140,255,0.5)');
+    c.fillStyle = wg;
+    c.beginPath();
+    c.roundRect(bx - bw/2 + 2, by + bh - waterH, bw - 4, waterH, [0, 0, 6, 6]);
+    c.fill();
+  }
+
+  // Oil layer
+  if (lavaAdded.includes(1)) {
+    const oilY = lavaAdded.includes(0) ? by + bh * 0.3 : by + bh * 0.5;
+    const oilH = lavaAdded.includes(0) ? bh * 0.2 : bh * 0.5;
+    const og = c.createLinearGradient(0, oilY, 0, oilY + oilH);
+    og.addColorStop(0, 'rgba(255,210,80,0.6)');
+    og.addColorStop(1, 'rgba(220,170,40,0.4)');
+    c.fillStyle = og;
+    c.beginPath();
+    c.roundRect(bx - bw/2 + 2, oilY, bw - 4, oilH, [0,0,0,0]);
+    c.fill();
+  }
+
+  // Drops
+  lavaDrops.forEach(d => {
+    c.beginPath();
+    c.ellipse(d.x, d.y, d.rx, d.ry, 0, 0, Math.PI * 2);
+    c.fillStyle = d.color;
+    c.fill();
+    // CO2 bubble
+    if (d.hasBubble) {
+      c.beginPath();
+      c.arc(d.x, d.y - d.ry - 3, 3, 0, Math.PI*2);
+      c.fillStyle = 'rgba(255,255,255,0.4)';
+      c.fill();
+    }
+  });
+
+  // Labels
+  c.font = '11px Share Tech Mono';
+  c.fillStyle = 'rgba(0,212,255,0.6)';
+  c.textAlign = 'center';
+  if (lavaAdded.includes(1) && lavaAdded.includes(0)) {
+    c.fillText('ACEITE — menos denso', bx, by + bh * 0.32);
+    c.fillText('AGUA — más densa', bx, by + bh * 0.78);
+  }
+
+  if (lavaAdded.includes(3)) {
+    // Animate drops
+    lavaDrops.forEach(d => {
+      d.y -= d.speed;
+      d.x += d.vx;
+      if (d.y < by + 20) { d.y = by + bh - 20; d.x = bx - bw/2 + 20 + Math.random() * (bw - 40); }
+    });
+    lavaAnimId = requestAnimationFrame(drawLavaLamp);
+  }
+}
+
+function addLavaIngredient(i) {
+  if (lavaAdded.includes(i)) { showToast('Ya fue añadido', 'info'); return; }
+
+  // Check order
+  const correctOrder = [0, 1, 2, 3];
+  const expectedNext = correctOrder[lavaAdded.length];
+
+  if (i !== expectedNext) {
+    showToast('⚠️ Orden incorrecto. Agrega: ' + LAVA_INGREDIENTS[expectedNext].name, 'error');
+    return;
+  }
+
+  lavaAdded.push(i);
+  document.getElementById('chip-' + i).classList.add('added');
+  addExpScore(75);
+  setProgress(lavaAdded.length * 25);
+  showToast('✅ ' + LAVA_INGREDIENTS[i].name + ' añadido', 'success');
+  spawnFloatParticle(180, 250, LAVA_INGREDIENTS[i].icon);
+
+  // Generate drops when tablet added
+  if (i === 3) {
+    for (let d = 0; d < 12; d++) {
+      lavaDrops.push({
+        x: lavaCanvas.width/2 - 30 + Math.random()*60,
+        y: lavaCanvas.height * 0.7 - Math.random() * 40,
+        rx: 8 + Math.random()*6,
+        ry: 6 + Math.random()*5,
+        color: d % 2 === 0 ? 'rgba(180,50,255,0.7)' : 'rgba(100,180,255,0.6)',
+        speed: 0.5 + Math.random()*1,
+        vx: (Math.random()-0.5)*0.3,
+        hasBubble: Math.random() > 0.4
+      });
+    }
+    showToast('🫧 ¡CO₂ liberado! Gotas en movimiento', 'gold', 3000);
+  }
+
+  drawLavaLamp();
+
+  if (lavaAdded.length === 4) {
+    setTimeout(() => {
+      const stars = state.expScore >= 350 ? 3 : state.expScore >= 200 ? 2 : 1;
+      showResults(state.expScore, stars, 2);
+    }, 3000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPERIMENT 4: BIOPLASTIC
+// ═══════════════════════════════════════════════════════════════
+let bioPhase = 0, bioHeat = 0, bioStirs = 0, bioDrying = false, bioDryTimer = null, bioTimerEl = null, bioMaxDryTime = 30;
+
+function buildBioplastic() {
+  const body = document.getElementById('exp-body');
+  body.innerHTML = `
+    <div class="exp-intro">
+      <span class="exp-intro-emoji">🧪</span>
+      <div class="exp-intro-title">Bioplástico de Maicena</div>
+      <div class="exp-intro-desc">Mezcla los ingredientes, controla la temperatura y revuelve para crear un bioplástico flexible.</div>
+    </div>
+    <div class="bioplastic-scene">
+      <div class="lab-bench">
+        <div class="phase-label">INGREDIENTES — TOCA EN ORDEN</div>
+        <div class="ingredient-bar" id="bio-ingr">
+          <div class="ingredient-chip" id="biochip-0" onclick="addBioIngr(0)">🌽 Maicena</div>
+          <div class="ingredient-chip" id="biochip-1" onclick="addBioIngr(1)">💧 Agua</div>
+          <div class="ingredient-chip" id="biochip-2" onclick="addBioIngr(2)">🍶 Vinagre</div>
+          <div class="ingredient-chip" id="biochip-3" onclick="addBioIngr(3)">🧴 Glicerina</div>
+        </div>
+      </div>
+
+      <div class="lab-bench">
+        <div class="phase-label">TEMPERATURA — CONTROLA EL CALOR</div>
+        <div class="heat-control">
+          <div class="heat-slider-wrap">
+            <span class="heat-icon">❄️</span>
+            <input type="range" class="heat-slider" id="heat-slider" min="0" max="100" value="0" oninput="updateHeat(this.value)">
+            <span class="heat-icon">🔥</span>
+          </div>
+          <div style="text-align:center;margin-top:8px;font-family:'Orbitron',monospace;font-size:14px;color:var(--yellow-sci)">
+            <span id="heat-temp-display">0°C</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lab-bench">
+        <div class="phase-label">REVOLVER — <span id="stir-count">0</span>/10</div>
+        <button class="stir-btn" onclick="stirMixture()">🥄 REVOLVER</button>
+        <div class="phase-indicator" style="margin-top:12px">
+          ${['Mezcla', 'Gelifica', 'Plástico'].map((ph, i) => `<div class="phase-dot" id="biodot-${i}"></div><span style="font-size:10px;color:var(--text-muted)">${ph}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="lab-bench" id="bio-dry-panel" style="display:none">
+        <div class="phase-label">TIEMPO DE SECADO</div>
+        <div class="timer-display" id="bio-dry-timer">30</div>
+        <div class="timer-bar-wrap">
+          <div class="timer-bar-fill" id="bio-dry-bar" style="width:100%"></div>
+        </div>
+        <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:8px" id="bio-state-text">Líquido → Gel → Sólido</div>
+      </div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">🌿 QUÍMICA VERDE</div>
+      <p>El almidón de maicena forma cadenas de polímero al calentarse. La glicerina actúa como plastificante, dando flexibilidad. Al enfriar, se forma un plástico biodegradable.</p>
+    </div>
+    <div style="height:16px"></div>
+  `;
+
+  bioPhase = 0; bioHeat = 0; bioStirs = 0; bioDrying = false;
+  if (bioDryTimer) { clearInterval(bioDryTimer); bioDryTimer = null; }
+  document.getElementById('biodot-0').classList.add('active');
+  setProgress(5);
+}
+
+let bioAdded = [];
+function addBioIngr(i) {
+  if (bioAdded === undefined) bioAdded = [];
+  if (bioAdded.includes(i)) return;
+  const order = [0,1,2,3];
+  if (i !== order[bioAdded.length]) {
+    showToast('⚠️ Orden incorrecto', 'error'); return;
+  }
+  bioAdded.push(i);
+  document.getElementById('biochip-' + i).classList.add('added');
+  addExpScore(50);
+  setProgress(bioAdded.length * 12);
+  showToast('✅ Ingrediente añadido', 'success');
+  spawnFloatParticle(180, 300, ['🌽','💧','🍶','🧴'][i]);
+}
+
+function updateHeat(val) {
+  bioHeat = parseInt(val);
+  const temp = Math.round(bioHeat * 1.2);
+  document.getElementById('heat-temp-display').textContent = temp + '°C';
+}
+
+function stirMixture() {
+  if (bioAdded.length < 4) { showToast('⚠️ Agrega todos los ingredientes primero', 'error'); return; }
+  if (bioHeat < 30) { showToast('⚠️ Sube la temperatura (>36°C)', 'error'); return; }
+  if (bioDrying) return;
+
+  bioStirs++;
+  document.getElementById('stir-count').textContent = bioStirs;
+  addExpScore(20);
+  showToast('🥄 Revolviendo...', 'info', 800);
+  spawnFloatParticle(200, 280, '💫');
+
+  if (bioStirs === 5) {
+    document.getElementById('biodot-0').classList.remove('active');
+    document.getElementById('biodot-0').classList.add('done');
+    document.getElementById('biodot-1').classList.add('active');
+    showToast('🫙 ¡Gelificando!', 'gold');
+    setProgress(60);
+  }
+
+  if (bioStirs >= 10) {
+    document.getElementById('biodot-1').classList.remove('active');
+    document.getElementById('biodot-1').classList.add('done');
+    document.getElementById('biodot-2').classList.add('active');
+    startDrying();
+  }
+}
+
+function startDrying() {
+  if (bioDrying) return;
+  bioDrying = true;
+  const panel = document.getElementById('bio-dry-panel');
+  panel.style.display = 'block';
+  let timeLeft = bioMaxDryTime;
+  setProgress(80);
+  showToast('⏳ Secando... espera el cronómetro', 'info', 2500);
+
+  bioDryTimer = setInterval(() => {
+    timeLeft--;
+    const pct = (timeLeft / bioMaxDryTime) * 100;
+    document.getElementById('bio-dry-timer').textContent = timeLeft;
+    document.getElementById('bio-dry-bar').style.width = pct + '%';
+    if (pct < 33) document.getElementById('bio-dry-bar').classList.add('danger');
+
+    const states = ['Líquido', 'Gelificando...', 'Solidificando...', '✅ ¡BIOPLÁSTICO LISTO!'];
+    const si = timeLeft > 20 ? 0 : timeLeft > 10 ? 1 : timeLeft > 0 ? 2 : 3;
+    document.getElementById('bio-state-text').textContent = states[si];
+
+    if (timeLeft <= 0) {
+      clearInterval(bioDryTimer);
+      setProgress(100);
+      addExpScore(250);
+      showToast('🎉 ¡BIOPLÁSTICO CREADO! +250pts', 'gold', 3000);
+      spawnFloatParticle(150, 200, '🌿');
+      spawnFloatParticle(250, 220, '⭐');
+      setTimeout(() => {
+        const stars = state.expScore >= 500 ? 3 : state.expScore >= 300 ? 2 : 1;
+        showResults(state.expScore, stars, 3);
+        bioAdded = [];
+      }, 2500);
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════════════════════════════
+const QUIZ_QUESTIONS = [
+  { q: '¿Qué es un coloide?', opts: ['Una solución verdadera homogénea','Una mezcla con partículas de 1–1000 nm','Una sustancia pura','Agua destilada'], correct: 1 },
+  { q: '¿Qué reacción libera oxígeno gas (O₂)?', opts: ['Agua + sal','H₂O₂ con catalizador','Aceite + agua','Maicena + vinagre'], correct: 1 },
+  { q: '¿Por qué el aceite flota sobre el agua?', opts: ['Porque es más viscoso','Porque es menos denso (0.85 g/cm³)','Porque es miscible','Porque tiene más temperatura'], correct: 1 },
+  { q: '¿Qué es el Efecto Tyndall?', opts: ['La reacción entre ácidos y bases','Dispersión de luz por partículas coloidales','La formación de burbujas en un líquido','La evaporación del agua'], correct: 1 },
+  { q: '¿Qué gas libera la pastilla efervescente en la lámpara de lava?', opts: ['O₂','H₂','CO₂','N₂'], correct: 2 },
+  { q: '¿Cuál es la función del catalizador en la pasta de elefante?', opts: ['Dar color a la espuma','Acelerar la descomposición del H₂O₂','Aumentar la viscosidad','Enfriar la reacción'], correct: 1 },
+  { q: '¿Qué tipo de reacción es la pasta de elefante?', opts: ['Endotérmica (absorbe calor)','Neutralización','Exotérmica (libera calor)','Fotosíntesis'], correct: 2 },
+  { q: '¿Qué da flexibilidad al bioplástico de maicena?', opts: ['El vinagre','El agua','La glicerina','El almidón solo'], correct: 2 },
+  { q: '¿Qué diferencia a una solución verdadera de un coloide?', opts: ['Las partículas del coloide son visibles a simple vista','En la solución se dispersa la luz pero no en el coloide','El coloide tiene partículas >1nm que dispersan la luz','No hay diferencia'], correct: 2 },
+  { q: '¿Qué sucede con las moléculas de almidón al calentarse con agua?', opts: ['Se evaporan','Se gelatinizan formando cadenas de polímero','Se disuelven sin reacción','Se convierten en CO₂'], correct: 1 },
+];
+
+let quizQuestions = [], quizAnswered = false;
+
+function startQuiz() {
+  state.quizScore = 0;
+  state.quizQ = 0;
+  quizQuestions = [...QUIZ_QUESTIONS].sort(() => Math.random()-0.5).slice(0, 8);
+  document.getElementById('quiz-score-display').textContent = '0';
+  showScreen('screen-quiz');
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  clearTimers();
+  quizAnswered = false;
+  const q = quizQuestions[state.quizQ];
+  if (!q) { endQuiz(); return; }
+
+  document.getElementById('quiz-num').textContent = state.quizQ + 1;
+  document.getElementById('quiz-q-label').textContent = `PREGUNTA ${state.quizQ+1} DE ${quizQuestions.length}`;
+  document.getElementById('quiz-question').textContent = q.q;
+
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = q.opts.map((opt, i) => `
+    <div class="quiz-option" id="qopt-${i}" onclick="answerQuiz(${i})">
+      <span class="quiz-opt-letter">${['A','B','C','D'][i]}</span>
+      <span>${opt}</span>
+    </div>
+  `).join('');
+
+  state.quizTimeLeft = 15;
+  document.getElementById('quiz-timer').textContent = 15;
+  document.getElementById('quiz-timer-bar').style.width = '100%';
+  document.getElementById('quiz-timer-bar').classList.remove('danger');
+
+  state.quizTimer = setInterval(() => {
+    state.quizTimeLeft--;
+    document.getElementById('quiz-timer').textContent = state.quizTimeLeft;
+    document.getElementById('quiz-timer-bar').style.width = (state.quizTimeLeft/15*100)+'%';
+    if (state.quizTimeLeft <= 5) document.getElementById('quiz-timer-bar').classList.add('danger');
+    if (state.quizTimeLeft <= 0) {
+      clearInterval(state.quizTimer);
+      if (!quizAnswered) timeoutQuiz();
+    }
+  }, 1000);
+}
+
+function answerQuiz(i) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  clearTimers();
+  const q = quizQuestions[state.quizQ];
+  const correct = i === q.correct;
+
+  document.querySelectorAll('.quiz-option').forEach((el, j) => {
+    if (j === q.correct) el.classList.add('correct');
+    else if (j === i && !correct) el.classList.add('wrong');
+    el.style.pointerEvents = 'none';
+  });
+
+  if (correct) {
+    const bonus = state.quizTimeLeft >= 10 ? 100 : state.quizTimeLeft >= 5 ? 75 : 50;
+    state.quizScore += bonus;
+    document.getElementById('quiz-score-display').textContent = state.quizScore;
+    showToast(`✅ +${bonus} pts`, 'success');
+    spawnFloatParticle(200, 300, '⭐');
+  } else {
+    showToast('❌ Incorrecto', 'error');
+  }
+
+  setTimeout(() => {
+    state.quizQ++;
+    showQuizQuestion();
+  }, 1500);
+}
+
+function timeoutQuiz() {
+  quizAnswered = true;
+  const q = quizQuestions[state.quizQ];
+  document.querySelectorAll('.quiz-option').forEach((el, j) => {
+    if (j === q.correct) el.classList.add('correct');
+    el.style.pointerEvents = 'none';
+  });
+  showToast('⏰ ¡Tiempo!', 'error');
+  setTimeout(() => { state.quizQ++; showQuizQuestion(); }, 1500);
+}
+
+function endQuiz() {
+  clearTimers();
+  addXP(state.quizScore / 2);
+  addCoins(state.quizScore / 10);
+  const stars = state.quizScore >= 600 ? 3 : state.quizScore >= 350 ? 2 : 1;
+
+  document.getElementById('res-emoji').textContent = stars >= 3 ? '🧠' : stars >= 2 ? '📚' : '📝';
+  document.getElementById('res-title').textContent = stars >= 3 ? '¡GENIO QUÍMICO!' : stars >= 2 ? '¡BUEN CIENTÍFICO!' : '¡SEGUÍ PRACTICANDO!';
+  document.getElementById('res-exp-name').textContent = 'Quiz de Química';
+  document.getElementById('res-score').textContent = state.quizScore;
+  document.getElementById('res-fact').textContent = 'Puedes seguir practicando los experimentos del laboratorio para reforzar tus conocimientos de química.';
+
+  const starsEl = document.getElementById('res-stars');
+  starsEl.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'result-star';
+    s.textContent = i < stars ? '⭐' : '☆';
+    starsEl.appendChild(s);
+  }
+  showScreen('screen-results');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENCYCLOPEDIA
+// ═══════════════════════════════════════════════════════════════
+const ENCY_DATA = [
+  {
+    icon: '🔬',
+    title: 'Coloides',
+    text: 'Mezclas con partículas de 1–1000 nm. Ni se disuelven del todo ni se ven a simple vista. Ejemplos: leche, niebla, mayonesa, gelatina. Dispersan la luz (Efecto Tyndall).'
+  },
+  {
+    icon: '⚗️',
+    title: 'Peróxido de Hidrógeno',
+    text: 'H₂O₂ es agua oxigenada. Es un oxidante fuerte. Con un catalizador como la levadura o el KI, se descompone en agua y oxígeno: 2H₂O₂ → 2H₂O + O₂. Reacción exotérmica.'
+  },
+  {
+    icon: '🫙',
+    title: 'Densidad e Inmiscibilidad',
+    text: 'La densidad es masa por volumen (g/cm³). El aceite (0.85) flota sobre agua (1.0). Además, son inmiscibles: sus moléculas son incompatibles (polaridad diferente).'
+  },
+  {
+    icon: '🌿',
+    title: 'Polímeros y Bioplásticos',
+    text: 'Polímero = cadena de monómeros. El almidón de maicena forma polímeros al calentarse. Con plastificantes como la glicerina se vuelven flexibles. Son biodegradables en semanas.'
+  },
+  {
+    icon: '🌡️',
+    title: 'Reacciones Exotérmicas',
+    text: 'Liberan energía en forma de calor. ΔH < 0. La combustión, la pasta de elefante y la neutralización ácido-base son ejemplos. Las reacciones endotérmicas absorben calor (ΔH > 0).'
+  },
+  {
+    icon: '💡',
+    title: 'Catalizadores',
+    text: 'Sustancias que aceleran una reacción sin consumirse. Bajan la energía de activación. La levadura y el KMnO₄ son catalizadores para la descomposición del H₂O₂.'
+  },
+  {
+    icon: '🫧',
+    title: 'Dióxido de Carbono (CO₂)',
+    text: 'Gas producido en muchas reacciones químicas: respiración celular, fermentación, reacciones ácido-carbonato. En la lámpara de lava, el CO₂ arrastra gotas de agua hacia arriba al subir.'
+  },
+  {
+    icon: '🔦',
+    title: 'Efecto Tyndall',
+    text: 'Descubierto por John Tyndall (1869). En coloides, las partículas dispersan la luz haciendo visible el haz. En soluciones verdaderas no ocurre. Explica por qué el cielo es azul.'
+  }
+];
+
+function openEncyclopedia() {
+  const list = document.getElementById('ency-list');
+  list.innerHTML = ENCY_DATA.map(e => `
+    <div class="ency-card">
+      <div class="ency-card-header">
+        <span class="ency-icon">${e.icon}</span>
+        <span class="ency-title">${e.title}</span>
+      </div>
+      <div class="ency-text">${e.text}</div>
+    </div>
+  `).join('');
+  showScreen('screen-encyclopedia');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SANDBOX
+// ═══════════════════════════════════════════════════════════════
+const SANDBOX_ITEMS = [
+  { name: 'Agua', icon: '💧' },
+  { name: 'Sal', icon: '🧂' },
+  { name: 'Aceite', icon: '🫙' },
+  { name: 'Azúcar', icon: '🍬' },
+  { name: 'Leche', icon: '🥛' },
+  { name: 'Vinagre', icon: '🍶' },
+  { name: 'H₂O₂', icon: '⚗️' },
+  { name: 'Levadura', icon: '🧫' },
+  { name: 'Colorante', icon: '🎨' },
+  { name: 'CO₂', icon: '🫧' },
+  { name: 'Láser', icon: '🔦' },
+  { name: 'Maicena', icon: '🌽' }
+];
+
+const SANDBOX_REACTIONS = [
+  { combo: ['Agua','Sal'], result: '💧 Agua + Sal → Solución salina. Mezcla homogénea. Las partículas de NaCl se disocian en iones Na⁺ y Cl⁻. No hay Efecto Tyndall.' },
+  { combo: ['Agua','Aceite'], result: '🫙 Agua + Aceite → No se mezclan. Son inmiscibles. El aceite (d=0.85) flota sobre el agua (d=1.0) por diferencia de densidad y polaridad.' },
+  { combo: ['Leche','Láser'], result: '🔦 Leche + Láser → ¡Efecto Tyndall! La leche es un coloide. Las gotitas de grasa (1–1000nm) dispersan el haz de luz haciéndolo visible.' },
+  { combo: ['Agua','Láser'], result: '💧 Agua + Láser → No hay Efecto Tyndall. El agua pura es una solución verdadera con partículas <1nm. El haz pasa sin dispersarse.' },
+  { combo: ['H₂O₂','Levadura'], result: '⚡ ¡REACCIÓN! H₂O₂ + Levadura → 2H₂O + O₂↑. El catalizador libera oxígeno. Reacción exotérmica. Base de la pasta de elefante.' },
+  { combo: ['Agua','Maicena'], result: '🌽 Agua + Maicena → Mezcla coloide (suspensión). Si aplicas calor, el almidón gelatiniza. ¡Base de los bioplásticos!' },
+  { combo: ['Agua','Vinagre'], result: '🍶 Agua + Vinagre → Solución de ácido acético (CH₃COOH). El vinagre tiene ~5% de ácido acético. Mezcla miscible y homogénea.' },
+  { combo: ['Aceite','Colorante'], result: '🎨 Aceite + Colorante → El colorante acuoso NO se disuelve en aceite. Queda en gotitas separadas. Diferente polaridad (polar vs apolar).' },
+];
+
+function openSandbox() {
+  state.sandboxSelected = [];
+  const grid = document.getElementById('sandbox-grid');
+  grid.innerHTML = SANDBOX_ITEMS.map((it, i) => `
+    <div class="sandbox-item" id="sbox-${i}" onclick="toggleSandbox(${i})">
+      <div class="sandbox-item-icon">${it.icon}</div>
+      <div class="sandbox-item-name">${it.name}</div>
+    </div>
+  `).join('');
+  document.getElementById('sandbox-result-text').textContent = 'Selecciona ingredientes y presiona MEZCLAR';
+  document.getElementById('sandbox-result-text').style.color = 'var(--text-muted)';
+  document.getElementById('sandbox-selected').innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Ninguna seleccionada</span>';
+  showScreen('screen-sandbox');
+}
+
+function toggleSandbox(i) {
+  const idx = state.sandboxSelected.indexOf(i);
+  if (idx >= 0) {
+    state.sandboxSelected.splice(idx, 1);
+    document.getElementById('sbox-' + i).style.borderColor = '';
+    document.getElementById('sbox-' + i).style.background = '';
+  } else {
+    if (state.sandboxSelected.length >= 3) { showToast('Máximo 3 sustancias', 'info'); return; }
+    state.sandboxSelected.push(i);
+    document.getElementById('sbox-' + i).style.borderColor = 'var(--blue-neon)';
+    document.getElementById('sbox-' + i).style.background = 'rgba(0,212,255,0.1)';
+  }
+
+  const sel = document.getElementById('sandbox-selected');
+  if (state.sandboxSelected.length === 0) {
+    sel.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">Ninguna seleccionada</span>';
+  } else {
+    sel.innerHTML = state.sandboxSelected.map(j =>
+      `<span class="ingredient-chip added" style="font-size:11px">${SANDBOX_ITEMS[j].icon} ${SANDBOX_ITEMS[j].name}</span>`
+    ).join('');
+  }
+}
+
+function runSandbox() {
+  if (state.sandboxSelected.length < 2) { showToast('Selecciona al menos 2', 'info'); return; }
+  const names = state.sandboxSelected.map(i => SANDBOX_ITEMS[i].name).sort();
+
+  let found = null;
+  for (const r of SANDBOX_REACTIONS) {
+    const combo = [...r.combo].sort();
+    if (combo.every(c => names.includes(c))) { found = r; break; }
+  }
+
+  const el = document.getElementById('sandbox-result-text');
+  if (found) {
+    el.textContent = found.result;
+    el.style.color = 'var(--text-main)';
+    showToast('🔬 ¡Reacción encontrada!', 'success');
+    spawnFloatParticle(200, 250, '⚗️');
+    addXP(30);
+    addCoins(5);
+  } else {
+    el.textContent = '🔬 No se observa reacción notable entre estas sustancias. Prueba otra combinación. Consejo: mezcla Leche + Láser o H₂O₂ + Levadura.';
+    el.style.color = 'var(--text-muted)';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  initParticles();
+  animateParticles();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Splash → Menu after 3s
+  setTimeout(() => {
+    showMenu();
+  }, 2800);
+});
+</script>
+</body>
+</html>
